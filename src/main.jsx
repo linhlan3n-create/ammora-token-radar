@@ -25,7 +25,71 @@ function App() {
   useEffect(() => {
     const ethereum = window.ethereum
     if (!ethereum?.request) return
-    ethereum.request({ method: 'eth_accounts' })
+    ethereum.request(return (
+  <div className="app-shell">
+    <header className="topbar">
+      <div className="brand"><span className="brand-mark">A</span> Ammora / Radar</div>
+      <nav className="nav">
+        <a className="active" href="#overview">Overview</a>
+        <a href="#network">Network</a>
+        <a href="#about">About</a>
+      </nav>
+      <button className="btn btn-primary" onClick={connectWallet} disabled={busy}>
+        {account ? shortAddress(account) : 'Connect wallet'}
+      </button>
+    </header>
+
+    <section className="hero" id="overview">
+      <div>
+        <div className="eyebrow">AMMORA PROTOCOL / TESTNET</div>
+        <h1>Token radar.</h1>
+        <p>Explore Ammora launch infrastructure and inspect the GIWA Sepolia deployment from one focused workspace.</p>
+        <div className="hero-actions">
+          <a className="btn btn-primary" href="#network">Explore network ↓</a>
+          <a className="btn btn-ghost" href="https://docs.ammora.org/guides/sdk-quickstart" target="_blank" rel="noreferrer">SDK quickstart ↗</a>
+        </div>
+      </div>
+      <div className="panel">
+        <div className="detail-row"><span>Network</span><strong>GIWA Sepolia</strong></div>
+        <div className="detail-row"><span>Chain ID</span><strong>{sdkChainId}</strong></div>
+        <div className="detail-row"><span>SDK</span><strong>0.3.9</strong></div>
+        <div className="detail-row"><span>Protocol</span><strong>V{launchProtocolVersion}</strong></div>
+      </div>
+    </section>
+
+    <section className="stats">
+      <div className="stat"><span>NETWORK</span><strong>GIWA Sepolia</strong></div>
+      <div className="stat"><span>CHAIN ID</span><strong>{sdkChainId}</strong></div>
+      <div className="stat"><span>PROTOCOL SDK</span><strong>v0.3.9</strong></div>
+      <div className="stat"><span>ENVIRONMENT</span><strong>Testnet</strong></div>
+    </section>
+
+    <section className="content" id="network">
+      <div className="panel">
+        <div className="eyebrow">DEPLOYMENT</div>
+        <h2>Network details</h2>
+        <div className="detail-row"><span>Configured chain</span><strong>{sdkChainId}</strong></div>
+        <div className="detail-row"><span>Launch protocol</span><strong>V{launchProtocolVersion}</strong></div>
+        <div className="detail-row"><span>Config registry</span><code>{configRegistry || 'Not exposed in catalog'}</code></div>
+        <div className="detail-row"><span>Connected wallet</span><strong>{account ? shortAddress(account) : 'Not connected'}</strong></div>
+        <div className="detail-row"><span>Wallet network</span><strong className={onTargetNetwork ? 'green' : 'orange'}>{chainId ? (onTargetNetwork ? 'GIWA Sepolia' : `Chain ${chainId}`) : 'Not connected'}</strong></div>
+        {walletMessage && <p className="footnote">{walletMessage}</p>}
+        <p className="footnote">Read-only deployment information from the SDK catalog. This page does not create launches or send transactions.</p>
+      </div>
+
+      <div className="panel">
+        <div className="eyebrow">DISCOVERY</div>
+        <h2>Launch explorer</h2>
+        <p className="footnote">This starter intentionally does not invent an indexer endpoint or fake token/launch records.</p>
+      </div>
+    </section>
+
+    <footer id="about">
+      <span>▲ Ammora Token Radar</span>
+      <span>TESTNET ONLY · SDK 0.3.9</span>
+    </footer>
+  </div>
+))
       .then(accounts => { if (accounts?.[0]) setAccount(accounts[0]) })
       .catch(() => {})
     ethereum.request({ method: 'eth_chainId' })
