@@ -1,127 +1,68 @@
-import React, { useState, useEffect } from 'react'
-import { createRoot } from 'react-dom/client'
-import { giwaSepoliaAutoRouteDeployment } from '@ammora-protocol/sdk'
-import './style.css'
 
-const TARGET_CHAIN_ID = 91342
-const TARGET_CHAIN_HEX = '0x' + TARGET_CHAIN_ID.toString(16)
-
-function shortAddress(value) {
-  return value ? `${value.slice(0, 6)}…${value.slice(-4)}` : ''
+:root {
+  --bg: #0b0d10;
+  --panel: #151922;
+  --panel-2: #1c212b;
+  --border: #2a3140;
+  --text: #e8edf5;
+  --muted: #9aa3b5;
+  --accent: #ff5a1f;
+  --accent-2: #ff7a45;
+  --green: #22c55e;
+  --orange: #f59e0b;
 }
 
-function App() {
-  const [account, setAccount] = useState('')
-  const [chainId, setChainId] = useState('')
-  const [walletMessage, setWalletMessage] = useState('')
-  const [busy, setBusy] = useState(false)
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+a { color: #93c5fd; text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-  // Use the official SDK's published GIWA Sepolia deployment catalog.
-  const deployment = giwaSepoliaAutoRouteDeployment
-  const sdkChainId = Number(deployment.chain.id)
-  const launchProtocolVersion = deployment.contracts.launch.protocolVersion
-  const configRegistry = deployment.contracts.launch.configRegistry
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 
-  useEffect(() => {
-    const ethereum = window.ethereum
-    if (!ethereum?.request) return
-    ethereum.request({ method: 'eth_accounts' })
-      .then(accounts => { if (accounts?.[0]) setAccount(accounts[0]) })
-      .catch(() => {})
-    ethereum.request({ method: 'eth_chainId' })
-      .then(setChainId)
-      .catch(() => {})
-    const onAccounts = accounts => setAccount(accounts?.[0] || '')
-    const onChain = id => setChainId(id)
-    ethereum.on?.('accountsChanged', onAccounts)
-    ethereum.on?.('chainChanged', onChain)
-    return () => {
-      ethereum.removeListener?.('accountsChanged', onAccounts)
-      ethereum.removeListener?.('chainChanged', onChain)
-    }
-  }, [])
-
-  async function connectWallet() {
-    const ethereum = window.ethereum
-    if (!ethereum?.request) {
-      setWalletMessage('No EIP-1193 wallet found. Install MetaMask or another injected wallet.')
-      return
-    }
-    setBusy(true)
-    setWalletMessage('')
-    try {
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
-      setAccount(accounts?.[0] || '')
-      const currentChain = await ethereum.request({ method: 'eth_chainId' })
-      setChainId(currentChain)
-      if (currentChain !== TARGET_CHAIN_HEX) {
-        try {
-          await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: TARGET_CHAIN_HEX }] })
-          setChainId(TARGET_CHAIN_HEX)
-          setWalletMessage('Wallet connected. GIWA Sepolia selected.')
-        } catch {
-          setWalletMessage('Wallet connected, but network switch was not completed. Please select GIWA Sepolia in your wallet.')
-        }
-      } else {
-        setWalletMessage('Wallet connected to GIWA Sepolia.')
-      }
-    } catch (error) {
-      setWalletMessage(error?.message || 'Wallet connection was cancelled or failed.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onTargetNetwork = chainId?.toLowerCase() === TARGET_CHAIN_HEX.toLowerCase()
-
-  return (
-    <main className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="#"><span className="brand-mark">◢</span><span>Ammora<span className="muted"> / Radar</span></span></a>
-        <nav><a className="active" href="#overview">Overview</a><a href="#network">Network</a><a href="#about">About</a></nav>
-        <button className="wallet-button" onClick={connectWallet} disabled={busy}>
-          {busy ? 'Connecting…' : account ? shortAddress(account) : 'Connect wallet'}
-        </button>
-      </header>
-
-      <section className="hero" id="overview">
-        <div className="hero-copy">
-          <div className="eyebrow"><span className="live-dot" /> AMMORA SDK · GIWA TESTNET</div>
-          <h1>Token radar<span>.</span></h1>
-          <p>Explore Ammora launch infrastructure and inspect the GIWA Sepolia deployment from one focused workspace.</p>
-          <div className="hero-actions"><a className="primary" href="#network">Explore network ↓</a><a className="secondary" href="https://docs.ammora.org/guides/sdk-quickstart" target="_blank" rel="noreferrer">SDK quickstart ↗</a></div>
-        </div>
-        <div className="orb-wrap" aria-hidden="true"><div className="orb"><div className="orb-core"/></div><span className="orbit-label">GIWA / 91342</span></div>
-      </section>
-
-      <section className="stats">
-        <article><span>NETWORK</span><strong>GIWA Sepolia</strong></article>
-        <article><span>CHAIN ID</span><strong>{sdkChainId}</strong></article>
-        <article><span>SDK VERSION</span><strong>0.3.9</strong></article>
-        <article><span>PROTOCOL</span><strong>V{launchProtocolVersion}</strong></article>
-      </section>
-
-      <section className="content-grid" id="network">
-        <div className="panel">
-          <div className="panel-heading"><div><span className="eyebrow">DEPLOYMENT</span><h2>Network details</h2></div><span className={`status ${sdkChainId === TARGET_CHAIN_ID ? 'ok' : 'warn'}`}>{sdkChainId === TARGET_CHAIN_ID ? 'Catalog loaded' : 'Check chain'}</span></div>
-          <div className="detail-row"><span>Configured chain</span><strong>{sdkChainId}</strong></div>
-          <div className="detail-row"><span>Launch protocol</span><strong>V{launchProtocolVersion}</strong></div>
-          <div className="detail-row"><span>Config registry</span><code>{configRegistry || 'Not exposed in catalog'}</code></div>
-          <div className="detail-row"><span>Connected wallet</span><strong>{account ? shortAddress(account) : 'Not connected'}</strong></div>
-          <div className="detail-row"><span>Wallet network</span><strong className={onTargetNetwork ? 'green' : 'orange'}>{chainId ? (onTargetNetwork ? 'GIWA Sepolia' : `Chain ${parseInt(chainId, 16)}`) : 'Not detected'}</strong></div>
-          {walletMessage && <p className="notice">{walletMessage}</p>}
-          <p className="footnote">Read-only deployment information from the SDK catalog. This page does not create launches or send transactions.</p>
-        </div>
-
-        <div className="panel explorer-panel">
-          <div className="panel-heading"><div><span className="eyebrow">DISCOVERY</span><h2>Launch explorer</h2></div><span className="status">Read-only</span></div>
-          <div className="empty-state"><div className="radar-icon">◎</div><h3>Launch data connection</h3><p>This starter intentionally does not invent an indexer endpoint or sample token records. Connect the documented Ammora data API in the next integration step to show live launches.</p><a href="https://docs.ammora.org/examples" target="_blank" rel="noreferrer">Browse official SDK examples ↗</a></div>
-        </div>
-      </section>
-
-      <footer id="about"><span className="brand-mark">◢</span><span>Ammora Token Radar</span><span className="footer-right">TESTNET ONLY · SDK 0.3.9</span></footer>
-    </main>
-  )
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px; border-bottom: 1px solid var(--border); background: #0f1218;
 }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.brand-mark { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #ff5a1f, #ff8a4c); display: grid; place-items: center; color: white; font-weight: 800; }
+.nav { display: flex; gap: 18px; color: var(--muted); }
+.nav a { color: var(--muted); }
+.nav a.active { color: white; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
 
-createRoot(document.getElementById('root')).render(<App />)
+.btn {
+  border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-2); }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+.hero {
+  margin: 24px; padding: 32px; border-radius: 18px;
+  background: radial-gradient(1200px 400px at 80% 20%, rgba(255,90,31,.18), transparent 60%), linear-gradient(180deg, #151922, #10141b);
+  border: 1px solid var(--border);
+  display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; align-items: center;
+}
+.eyebrow { color: var(--accent); letter-spacing: .12em; font-size: 12px; font-weight: 700; }
+.hero h1 { font-size: 56px; line-height: 1; margin: 8px 0 12px; }
+.hero p { color: var(--muted); max-width: 560px; }
+.hero-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0 24px 24px; }
+.stat { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.stat span { display: block; color: var(--muted); font-size: 12px; letter-spacing: .08em; }
+.stat strong { display: block; margin-top: 6px; font-size: 20px; }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.content { margin: 0 24px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #222833; }
+.detail-row span { color: var(--muted); }
+.green { color: var(--green); }
+.orange { color: var(--orange); }
+.footnote { color: var(--muted); font-size: 13px; }
+
+footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid var(--border); color: var(--muted); display: flex; justify-content: space-between; }
+
+@media (max-width: 900px) {
+  .hero, .content, .stats { grid-template-columns: 1fr; margin-left: 14px; margin-right: 14px; }
+  .hero h1 { font-size: 40px; }
+}
